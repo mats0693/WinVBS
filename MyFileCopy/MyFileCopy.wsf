@@ -1,0 +1,120 @@
+<job>
+<script language="VBScript">
+
+Option Explicit
+Const SHOW_ALERT = True
+Call Main
+WScript.Quit()
+
+Private Function Main()
+  Dim strSourcePath
+  Dim FSO
+  Dim Arg
+  Set FSO = CreateObject("Scripting.FileSystemObject")
+  If WScript.Arguments.Count = 0 Then
+    WScript.Arguments.ShowUsage
+  End If
+  For Each Arg In WScript.Arguments
+    strSourcePath = Arg
+    If FSO.FileExists(strSourcePath) Then
+      Call MainWork(strSourcePath)
+    End If
+  Next
+End Function
+
+Private Function MainWork(strBaseFullName)
+  Dim strBasePath
+  Dim strBaseName
+  Dim strBaseNameBase
+  Dim strBaseNameExt
+  Dim strNewFullName
+  Dim rtn
+  Dim FSO
+  Set FSO = CreateObject("Scripting.FileSystemObject")
+  If Not FSO.FileExists(strBaseFullName) Then
+    If SHOW_ALERT Then
+      MsgBox "[ERROR]file not exist.", vbQuestion + vbSystemModal
+    End If
+    MainWork = False: Exit Function
+  End If
+  strBasePath = FSO.GetParentFolderName(strBaseFullName) & "\"
+  strBaseName = FSO.GetFileName(strBaseFullName)
+  strBaseNameBase = FSO.GetBaseName(strBaseFullName)
+  strBaseNameExt = FSO.GetExtensionName(strBaseFullName)
+  If Not FSO.FileExists(strBaseFullName) Then
+    If SHOW_ALERT Then
+      MsgBox "[ERROR]file not exist." & strBaseName, vbSystemModal
+    End If
+    MainWork = False: Exit Function
+  End If
+  strNewFullName = getNewFullName(strBaseFullName)
+  FSO.CopyFile strBaseFullName, strNewFullName
+  MainWork = rtn: Exit Function
+End Function
+
+Private Function getNewFullName(strBaseFullName)
+  Dim FSO
+  Set FSO = CreateObject("Scripting.FileSystemObject")
+  Dim strNewFullName
+  Dim strNewPath
+  Dim strNewName
+  Dim strNewNameBase
+  Dim strNewNameExt
+  Dim strDateTime
+  Dim strDate
+  Dim strTime
+  Dim strBaseDateTime
+  Dim strWorkDateTime
+  Dim dateBase
+  Dim dateWork
+  dateBase = FSO.GetFile(strBaseFullName).DateLastModified
+  dateWork = Now()
+  strBaseDateTime = MyFormatDateTime(dateBase)
+  strWorkDateTime = MyFormatDateTime(dateWork)
+  strNewPath = FSO.GetParentFolderName(strBaseFullName) & "\"
+  strNewNameBase = FSO.GetBaseName(strBaseFullName)
+  strNewNameExt = FSO.GetExtensionName(strBaseFullName)
+  strNewName = strNewNameBase & "_" & strBaseDateTime & "." & strNewNameExt
+  strNewFullName = strNewPath & strNewName
+  getNewFullName = strNewFullName
+  Exit Function
+End Function
+
+Function MyFormatDateTime(workDate)
+  Dim strBaseDateTime
+  Dim strDate
+  Dim strTime
+  strDate = Right(Year(workDate), 4) _
+          & Right("0" & Month(workDate), 2) _
+          & Right("0" & Day(workDate), 2)
+  strTime = Right("0" & Hour(workDate), 2) _
+          & Right("0" & Minute(workDate), 2) _
+          & Right("0" & Second(workDate), 2)
+  strBaseDateTime = strDate & "_" & strTime
+  MyFormatDateTime = strBaseDateTime
+End Function
+
+Private Sub CreateFolder(ByVal Folder)
+  Dim FSO
+  Set FSO = CreateObject("Scripting.FileSystemObject")
+  Dim ParentFolder
+  ParentFolder = FSO.GetParentFolderName(Folder)
+  If ParentFolder <> "" Then If Not FSO.FolderExists(ParentFolder) Then CreateFolder ParentFolder
+  If Not FSO.FolderExists(Folder) Then FSO.CreateFolder Folder
+End Sub
+
+</script>
+<runtime>
+	<description>copy arg file.</description>
+	<unnamed
+		Name = "SOURCE"
+		helpstring = "target file path"
+		type = "string"
+		Required = "true"
+		many = "true"
+	/>
+	<example>
+	MyFileCopy.wsf D:\Hoge.xls
+	</example>
+</runtime>
+</job>
